@@ -35,14 +35,11 @@ The contributor wants to identify which beginner-labelled issues appear ready to
 
 1. Accept and normalize a public `github.com/{owner}/{repository}` URL.
 2. Read repository metadata, community profile data, and up to the 100 most recently updated open issues through GitHub's public REST API.
-3. Detect candidate issues using normalized beginner-oriented labels:
+3. Normalize labels by lowercasing, trimming, replacing hyphens and underscores with spaces, and collapsing whitespace. Detect candidate issues whose normalized label is:
    - `good first issue`
-   - `good-first-issue`
    - `first timers only`
-   - `first-timers-only`
    - `beginner`
    - `beginner friendly`
-   - `beginner-friendly`
    - `help wanted`
 4. Exclude pull requests returned by GitHub's issues endpoint.
 5. Classify each candidate as `Ready`, `Needs work`, or `Possibly stale`.
@@ -60,7 +57,7 @@ The contributor wants to identify which beginner-labelled issues appear ready to
 - LLM-generated rewrites or any paid API
 - Cross-repository issue discovery or rankings
 - Source-code quality, security, vulnerability, or dependency scanning
-- GitHub Actions integration, badges, browser extensions, or a CLI
+- An IssueReady GitHub Action product integration, badges, browser extensions, or a CLI
 - A hosted database or server-side GitHub token
 - Anonymous analytics in the first release
 
@@ -68,7 +65,7 @@ The contributor wants to identify which beginner-labelled issues appear ready to
 
 ### Landing state
 
-The single page contains a short value statement, one repository URL field, an `Analyze repository` button, two real example repositories, a privacy statement, and a link to the published methodology.
+The single page contains a short value statement, one repository URL field, an `Analyze repository` button, example buttons for `firstcontributions/first-contributions` and `ossf/scorecard`, a privacy statement, and a link to the published methodology. Examples are normal inputs and receive no special scoring behavior.
 
 ### Loading state
 
@@ -92,7 +89,15 @@ The layout is responsive, keyboard accessible, and never uses color as the only 
 
 ## 6. Deterministic assessment model
 
-Every rule and weight is published in the repository. Detection supports common English and Simplified Chinese headings and keywords. A visible explanation accompanies each result so users can disagree with the heuristic.
+Every rule and weight is published in the repository. A visible explanation accompanies each result so users can disagree with the heuristic. Matching is case-insensitive, ignores Markdown heading markers, and uses the following versioned dictionaries:
+
+- Context: `background`, `context`, `problem`, `motivation`, `背景`, `上下文`, `问题`, `动机`
+- Bounded task: `scope`, `task`, `steps`, `implementation`, `范围`, `任务`, `步骤`, `实现`, or the presence of an ordered list or Markdown checklist
+- Acceptance: `acceptance criteria`, `definition of done`, `done when`, `expected result`, `expected behavior`, `验收标准`, `完成标准`, `预期结果`, `预期行为`
+- Verification: `test`, `tests`, `testing`, `reproduce`, `reproduction`, `verify`, `validation`, `测试`, `复现`, `验证`
+- Generic-only titles: `fix`, `update`, `help`, `bug`, `issue`, `feature`, `修复`, `更新`, `帮助`, `问题`, `功能`
+
+A location hint passes when the body contains a slash-delimited file path, a filename with an extension, a backticked identifier, or a phrase containing `file`, `component`, `module`, `page`, `文件`, `组件`, `模块`, or `页面`.
 
 ### Issue quality score
 
@@ -113,13 +118,13 @@ The maximum is 100 points.
 
 - Archived repositories are always warned and their issues cannot be `Ready`.
 - A repository with no push in the last 180 days receives an inactivity warning.
-- README, CONTRIBUTING, and license availability are shown as contributor-onboarding prerequisites. Their absence does not alter the issue's numeric score, but it prevents a `Ready` classification until the missing prerequisite is disclosed on the issue card.
+- README, CONTRIBUTING, and license availability are shown as contributor-onboarding prerequisites. Their absence does not alter the issue's numeric score, but any missing prerequisite prevents a `Ready` classification.
 - Repository stars never affect readiness. Popularity is not evidence that an issue is actionable.
 
 ### Classification
 
 - `Possibly stale`: the repository is archived; the issue has a normalized `blocked`, `on hold`, `wontfix`, or `waiting` label; or the issue has not been updated for more than 180 days.
-- `Ready`: score is at least 70, the repository is not archived or inactive, and a README plus contribution guide are available.
+- `Ready`: score is at least 70, the repository is not archived or inactive, and README, contribution guide, and license data are all present.
 - `Needs work`: every other candidate.
 
 The wording is intentionally probabilistic. IssueReady does not claim that a contribution will be accepted or that a maintainer will respond.
@@ -163,7 +168,7 @@ No IssueReady backend receives the URL, issue body, or repository metadata.
 - Network failure: retain the entered URL and offer a manual retry.
 - Community-profile failure: continue issue assessment, mark prerequisite data unavailable, and avoid treating it as missing.
 - No beginner label: show the searched labels and the maintainer template.
-- More than 100 open issues: state that version 1 inspected only the 100 most recently updated issues and may omit older candidates.
+- Issue scope: every report states that version 1 inspected only the 100 most recently updated open items returned by GitHub and may omit older candidate issues. Pull requests are removed after retrieval.
 - Archived or inactive repository: show a prominent warning while preserving the read-only report.
 - Superseded request: cancel it with `AbortController` and suppress stale results.
 - Malicious issue content: never execute or render its HTML; truncate and escape excerpts.
@@ -176,7 +181,7 @@ No IssueReady backend receives the URL, issue body, or repository metadata.
 - Use a strict Content Security Policy compatible with the static application and GitHub API.
 - Pin GitHub Actions to trusted releases and enable dependency updates.
 - Do not request a GitHub token or ask users to paste credentials.
-- Include `SECURITY.md` with private vulnerability-reporting instructions.
+- Include `SECURITY.md` and enable GitHub private vulnerability reporting for the repository.
 
 ## 10. Testing strategy
 
@@ -244,4 +249,3 @@ Version 1 is complete when:
 - Keyword detection is initially limited to English and Simplified Chinese.
 - `help wanted` can include advanced work, so those issues may score poorly by design.
 - Browser-side calls expose only the same public repository information the visitor requested directly from GitHub.
-
