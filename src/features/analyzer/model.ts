@@ -2,6 +2,20 @@ export type Language = "en" | "zh-CN";
 export type Classification = "ready" | "needs-work" | "possibly-stale";
 export type FileState = "present" | "missing" | "unknown";
 
+export type GitHubErrorKind = "not-found" | "rate-limit" | "network" | "api";
+
+export class GitHubApiError extends Error {
+  constructor(
+    public readonly kind: GitHubErrorKind,
+    message: string,
+    public readonly status?: number,
+    public readonly resetAt?: Date
+  ) {
+    super(message);
+    this.name = "GitHubApiError";
+  }
+}
+
 export interface RepoRef {
   owner: string;
   repo: string;
