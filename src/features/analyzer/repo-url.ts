@@ -3,7 +3,7 @@ import type { RepoRef } from "./model";
 const OWNER = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const REPO = /^[A-Za-z0-9._-]{1,100}$/;
 const RAW_REPOSITORY_URL =
-  /^(?:https:\/\/)?github\.com(?::\d+)?\/[^/\\]+\/[^/\\]+\/?$/i;
+  /^(?:https:\/\/)?github\.com(?::\d+)?\/[^/?#\\]+\/[^/?#\\]+\/?$/i;
 
 export class RepoUrlError extends Error {
   constructor() {

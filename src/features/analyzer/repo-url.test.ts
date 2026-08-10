@@ -30,6 +30,8 @@ describe("parseGitHubRepoUrl", () => {
     ["embedded credentials", "https://user:secret@github.com/ossf/scorecard"],
     ["a query", "https://github.com/ossf/scorecard?tab=readme"],
     ["a hash", "https://github.com/ossf/scorecard#readme"],
+    ["an empty query delimiter", "https://github.com/ossf/scorecard?"],
+    ["an empty hash delimiter", "https://github.com/ossf/scorecard#"],
     ["internal owner whitespace", "https://github.com/open source/scorecard"],
     ["internal repository whitespace", "https://github.com/ossf/score card"],
     ["an insecure protocol", "http://github.com/ossf/scorecard"],
