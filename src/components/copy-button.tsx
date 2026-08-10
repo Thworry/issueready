@@ -18,6 +18,7 @@ export function CopyButton({
   const [status, setStatus] = useState<CopyStatus>("idle");
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useRef(true);
+  const requestId = useRef(0);
   const currentLabel =
     status === "copied"
       ? copiedLabel
@@ -29,11 +30,16 @@ export function CopyButton({
     mounted.current = true;
     return () => {
       mounted.current = false;
-      if (resetTimer.current !== null) clearTimeout(resetTimer.current);
+      requestId.current += 1;
+      if (resetTimer.current !== null) {
+        clearTimeout(resetTimer.current);
+        resetTimer.current = null;
+      }
     };
   }, []);
 
   async function copy() {
+    const request = ++requestId.current;
     if (resetTimer.current !== null) {
       clearTimeout(resetTimer.current);
       resetTimer.current = null;
@@ -41,14 +47,26 @@ export function CopyButton({
 
     try {
       await navigator.clipboard.writeText(text);
-      if (!mounted.current) return;
-      setStatus("copied");
-      resetTimer.current = setTimeout(() => {
-        setStatus("idle");
+      if (!mounted.current || request !== requestId.current) return;
+      if (resetTimer.current !== null) {
+        clearTimeout(resetTimer.current);
         resetTimer.current = null;
+      }
+      setStatus("copied");
+      const timer = setTimeout(() => {
+        if (resetTimer.current === timer) resetTimer.current = null;
+        if (mounted.current && request === requestId.current) {
+          setStatus("idle");
+        }
       }, 2_000);
+      resetTimer.current = timer;
     } catch {
-      if (mounted.current) setStatus("error");
+      if (!mounted.current || request !== requestId.current) return;
+      if (resetTimer.current !== null) {
+        clearTimeout(resetTimer.current);
+        resetTimer.current = null;
+      }
+      setStatus("error");
     }
   }
 

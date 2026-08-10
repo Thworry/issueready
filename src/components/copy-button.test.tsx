@@ -14,6 +14,16 @@ const clipboardDescriptor = Object.getOwnPropertyDescriptor(
 );
 const writeText = vi.fn<(text: string) => Promise<void>>();
 
+function deferredCopy() {
+  let resolve!: () => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
+}
+
 beforeEach(() => {
   writeText.mockReset();
   writeText.mockResolvedValue(undefined);
@@ -103,5 +113,109 @@ describe("CopyButton", () => {
     const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
     unmount();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not let an older success overwrite a newer failure", async () => {
+    vi.useFakeTimers();
+    const older = deferredCopy();
+    const newer = deferredCopy();
+    writeText
+      .mockImplementationOnce(() => older.promise)
+      .mockImplementationOnce(() => newer.promise);
+    render(
+      <CopyButton
+        copiedLabel="Copied"
+        errorLabel="Could not copy"
+        idleLabel="Copy checklist"
+        text="checklist"
+      />
+    );
+
+    const button = screen.getByRole("button", { name: "Copy checklist" });
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    await act(async () => {
+      newer.reject(new Error("newer request failed"));
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByRole("button", { name: "Could not copy" })
+    ).toBeVisible();
+
+    await act(async () => {
+      older.resolve();
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByRole("button", { name: "Could not copy" })
+    ).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent("Could not copy");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("keeps only the latest timer across out-of-order success and invalidates requests on unmount", async () => {
+    vi.useFakeTimers();
+    const first = deferredCopy();
+    const second = deferredCopy();
+    const latest = deferredCopy();
+    const cleanupRequest = deferredCopy();
+    writeText
+      .mockImplementationOnce(() => first.promise)
+      .mockImplementationOnce(() => second.promise)
+      .mockImplementationOnce(() => latest.promise)
+      .mockImplementationOnce(() => cleanupRequest.promise);
+    const { unmount } = render(
+      <CopyButton
+        copiedLabel="Copied"
+        errorLabel="Could not copy"
+        idleLabel="Copy checklist"
+        text="checklist"
+      />
+    );
+
+    const button = screen.getByRole("button", { name: "Copy checklist" });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(button);
+    await act(async () => {
+      latest.resolve();
+      await Promise.resolve();
+    });
+    expect(vi.getTimerCount()).toBe(1);
+
+    act(() => vi.advanceTimersByTime(1_000));
+    await act(async () => {
+      first.resolve();
+      await Promise.resolve();
+    });
+    expect(vi.getTimerCount()).toBe(1);
+    act(() => vi.advanceTimersByTime(999));
+    expect(screen.getByRole("button", { name: "Copied" })).toBeVisible();
+    act(() => vi.advanceTimersByTime(1));
+    expect(
+      screen.getByRole("button", { name: "Copy checklist" })
+    ).toBeVisible();
+    expect(vi.getTimerCount()).toBe(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy checklist" }));
+    await act(async () => {
+      cleanupRequest.resolve();
+      await Promise.resolve();
+    });
+    expect(vi.getTimerCount()).toBe(1);
+
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+    await act(async () => {
+      second.resolve();
+      await Promise.resolve();
+    });
+    act(() => vi.runAllTimers());
+    expect(vi.getTimerCount()).toBe(0);
+    expect(consoleError).not.toHaveBeenCalled();
   });
 });
