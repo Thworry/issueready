@@ -55,7 +55,7 @@ Scores add to a maximum of 100 points. Boundaries are inclusive unless explicitl
 | Signal                  | Weight | Passing rule                                                                                                                                                  |
 | ----------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Specific title**      |     10 | The trimmed title is 12–120 JavaScript string units long and is not a generic title after normalization.                                                      |
-| **Context**             |     15 | The Markdown-stripped visible body is at least 120 characters long, or the body contains a Context dictionary term.                                           |
+| **Context**             |     15 | The Markdown-stripped visible body is at least 120 JavaScript string units long, or the body contains a Context dictionary term.                              |
 | **Bounded task**        |     15 | The body contains a Bounded task dictionary term, a numbered-list item such as `1.` or `1)`, or a Markdown checkbox item.                                     |
 | **Acceptance criteria** |     20 | The body contains an Acceptance criteria dictionary term.                                                                                                     |
 | **Verification**        |     15 | The body contains a Verification dictionary term.                                                                                                             |
@@ -83,7 +83,7 @@ For the Specific title check, the title is converted to lowercase, punctuation o
 
 ### Markdown handling
 
-For the Context length alternative, IssueReady removes HTML tags, image destinations, link destinations, common Markdown punctuation, backticks, and repeated whitespace before counting visible text. The body is never rendered as remote HTML. Dictionary and structural-pattern checks use the original body text.
+For the Context length alternative, IssueReady removes HTML tags, image destinations, link destinations, common Markdown punctuation, backticks, and repeated whitespace before measuring the resulting visible text in JavaScript string units. The body is never rendered as remote HTML. Dictionary and structural-pattern checks use the original body text.
 
 ### Location patterns
 
