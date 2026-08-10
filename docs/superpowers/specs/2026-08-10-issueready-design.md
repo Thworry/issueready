@@ -134,10 +134,11 @@ The wording is intentionally probabilistic. IssueReady does not claim that a con
 ### Stack
 
 - Vite, React, and TypeScript
+- Node.js 24 and pnpm 11
 - Plain modular CSS with design tokens; no component framework
 - Vitest and Testing Library for unit/component tests
 - Playwright for browser-level tests
-- npm for dependency and script management
+- pnpm for dependency and script management
 - Static deployment to GitHub Pages through GitHub Actions
 
 ### Runtime boundaries
