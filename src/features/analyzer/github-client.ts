@@ -13,6 +13,17 @@ const HEADERS = {
   "X-GitHub-Api-Version": "2022-11-28"
 };
 
+function rateLimitResetAt(raw: string | null): Date | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds <= 0) return undefined;
+
+  const resetAt = new Date(seconds * 1000);
+  return Number.isFinite(resetAt.getTime()) ? resetAt : undefined;
+}
+
 async function requestJson<T>(
   url: string,
   signal: AbortSignal | undefined,
@@ -37,12 +48,11 @@ async function requestJson<T>(
       );
     }
     if (response.status === 403 && response.headers.has("X-RateLimit-Reset")) {
-      const seconds = Number(response.headers.get("X-RateLimit-Reset"));
       throw new GitHubApiError(
         "rate-limit",
         "GitHub rate limit reached",
         403,
-        Number.isFinite(seconds) ? new Date(seconds * 1000) : undefined
+        rateLimitResetAt(response.headers.get("X-RateLimit-Reset"))
       );
     }
     throw new GitHubApiError(
@@ -52,7 +62,28 @@ async function requestJson<T>(
     );
   }
 
-  return (await response.json()) as T;
+  try {
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+    if (error instanceof SyntaxError) {
+      throw new GitHubApiError(
+        "api",
+        "GitHub returned an invalid response",
+        response.status
+      );
+    }
+    if (error instanceof TypeError) {
+      throw new GitHubApiError("network", "GitHub could not be reached");
+    }
+    throw new GitHubApiError(
+      "api",
+      "GitHub response could not be read",
+      response.status
+    );
+  }
 }
 
 export async function fetchRepoSnapshot(

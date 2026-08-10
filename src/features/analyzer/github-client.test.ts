@@ -70,6 +70,12 @@ function responseFor(url: string): Response {
   throw new Error(`Unexpected URL: ${url}`);
 }
 
+function bodyReadErrorResponse(error: unknown): Response {
+  const response = jsonResponse({});
+  vi.spyOn(response, "json").mockRejectedValue(error);
+  return response;
+}
+
 function endpointFetcher(
   overrides: Partial<Record<string, Response | Error>> = {}
 ) {
@@ -176,6 +182,32 @@ describe("fetchRepoSnapshot", () => {
     });
   });
 
+  it.each([
+    ["an empty value", ""],
+    ["a whitespace-only value", "   "],
+    ["an out-of-Date-range value", "100000000000000000000"]
+  ])(
+    "keeps a rate-limit error without resetAt for %s",
+    async (_label, resetHeader) => {
+      const fetcher = endpointFetcher({
+        [ISSUES_URL]: jsonResponse(
+          { message: "API rate limit exceeded" },
+          403,
+          { "X-RateLimit-Reset": resetHeader }
+        )
+      });
+
+      await expect(
+        fetchRepoSnapshot({ owner: "o", repo: "r" }, undefined, fetcher)
+      ).rejects.toMatchObject({
+        name: "GitHubApiError",
+        kind: "rate-limit",
+        status: 403,
+        resetAt: undefined
+      });
+    }
+  );
+
   it("maps a repository fetch rejection to network", async () => {
     const fetcher = endpointFetcher({
       [REPOSITORY_URL]: new TypeError("Failed to fetch")
@@ -203,6 +235,72 @@ describe("fetchRepoSnapshot", () => {
       message: "GitHub returned status 451",
       status: 451
     });
+  });
+
+  it("maps an invalid JSON repository response to an api error", async () => {
+    const fetcher = endpointFetcher({
+      [REPOSITORY_URL]: new Response("not JSON", {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      })
+    });
+
+    await expect(
+      fetchRepoSnapshot({ owner: "o", repo: "r" }, undefined, fetcher)
+    ).rejects.toMatchObject({
+      name: "GitHubApiError",
+      kind: "api",
+      message: "GitHub returned an invalid response",
+      status: 200
+    });
+  });
+
+  it("maps a repository body-read TypeError to network", async () => {
+    const fetcher = endpointFetcher({
+      [REPOSITORY_URL]: bodyReadErrorResponse(
+        new TypeError("The response body could not be read")
+      )
+    });
+
+    await expect(
+      fetchRepoSnapshot({ owner: "o", repo: "r" }, undefined, fetcher)
+    ).rejects.toMatchObject({
+      name: "GitHubApiError",
+      kind: "network",
+      message: "GitHub could not be reached"
+    });
+  });
+
+  it("maps an unexpected issues body-read error to a deterministic api error", async () => {
+    const fetcher = endpointFetcher({
+      [ISSUES_URL]: bodyReadErrorResponse(new Error("Decoder failed"))
+    });
+
+    await expect(
+      fetchRepoSnapshot({ owner: "o", repo: "r" }, undefined, fetcher)
+    ).rejects.toMatchObject({
+      name: "GitHubApiError",
+      kind: "api",
+      message: "GitHub response could not be read",
+      status: 200
+    });
+  });
+
+  it("preserves a community body-read AbortError by identity", async () => {
+    const abortError = new DOMException("Aborted", "AbortError");
+    const fetcher = endpointFetcher({
+      [COMMUNITY_URL]: bodyReadErrorResponse(abortError)
+    });
+
+    let caught: unknown;
+    try {
+      await fetchRepoSnapshot({ owner: "o", repo: "r" }, undefined, fetcher);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBe(abortError);
+    expect(caught).toMatchObject({ name: "AbortError" });
   });
 
   it("preserves an issues AbortError by identity and name", async () => {
