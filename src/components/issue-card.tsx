@@ -142,6 +142,15 @@ export function IssueCard({ assessment, language }: IssueCardProps) {
         </p>
       </div>
 
+      <a
+        className="issue-card__external-action"
+        href={issue.url}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {copy.openGitHub}
+      </a>
+
       <div className="issue-card__labels">
         <h4>{cardCopy.labels}</h4>
         {issue.labels.length > 0 ? (

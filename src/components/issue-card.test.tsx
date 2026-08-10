@@ -73,6 +73,15 @@ describe("IssueCard", () => {
     );
     expect(issueLink).toHaveAttribute("target", "_blank");
     expect(issueLink).toHaveAttribute("rel", "noopener noreferrer");
+    const openGitHub = within(article).getByRole("link", {
+      name: "Open on GitHub"
+    });
+    expect(openGitHub).toHaveAttribute(
+      "href",
+      "https://github.com/acme/tool/issues/42"
+    );
+    expect(openGitHub).toHaveAttribute("target", "_blank");
+    expect(openGitHub).toHaveAttribute("rel", "noopener noreferrer");
     expect(within(article).getByText("Needs work")).toBeVisible();
     expect(within(article).getByText("65/100")).toBeVisible();
     expect(within(article).getByText("Unassigned")).toBeVisible();
@@ -137,5 +146,12 @@ describe("IssueCard", () => {
     ).toBeVisible();
     expect(screen.getByText("已有 2 人领取")).toBeVisible();
     expect(screen.getByText("需要完善")).toBeVisible();
+    const openGitHub = screen.getByRole("link", { name: "在 GitHub 打开" });
+    expect(openGitHub).toHaveAttribute(
+      "href",
+      "https://github.com/acme/tool/issues/42"
+    );
+    expect(openGitHub).toHaveAttribute("target", "_blank");
+    expect(openGitHub).toHaveAttribute("rel", "noopener noreferrer");
   });
 });
