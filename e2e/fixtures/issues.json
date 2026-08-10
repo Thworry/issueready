@@ -1,0 +1,32 @@
+[
+  {
+    "number": 1,
+    "title": "Document the contribution setup workflow",
+    "html_url": "https://github.com/issueready/example/issues/1",
+    "body": "## Context\nNew contributors need a clear, repeatable explanation of the local setup workflow and the boundaries of their first change. This issue keeps that guidance close to the repository.\n\n## Task\n- [ ] Update `src/app.ts` and the contributor documentation with the bounded setup steps.\n\n## Acceptance criteria\n- [ ] The expected result is described for every supported environment.\n\n## Verification\nRun the tests and verify the documented commands from a clean checkout.",
+    "labels": ["good first issue", { "name": "documentation" }],
+    "updated_at": "2026-08-09T12:00:00Z",
+    "assignees": []
+  },
+  {
+    "number": 2,
+    "title": "Help",
+    "html_url": "https://github.com/issueready/example/issues/2",
+    "body": "Please help with this change.",
+    "labels": ["help wanted"],
+    "updated_at": "2026-08-09T12:00:00Z",
+    "assignees": [{ "login": "maintainer" }]
+  },
+  {
+    "number": 3,
+    "title": "Pull request returned by the issues endpoint",
+    "html_url": "https://github.com/issueready/example/pull/3",
+    "body": "This pull request must never appear as an issue card.",
+    "labels": ["good first issue"],
+    "updated_at": "2026-08-09T12:00:00Z",
+    "assignees": [],
+    "pull_request": {
+      "url": "https://api.github.com/repos/issueready/example/pulls/3"
+    }
+  }
+]

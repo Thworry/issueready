@@ -1,7 +1,7 @@
 # IssueReady UI Design System
 
 Date: 2026-08-10
-Status: Task 7 visual foundation
+Status: Task 10 browser-verified visual system
 
 ## Product and direction
 
@@ -47,6 +47,16 @@ The proof-sheet motif is a cobalt editorial margin rule with small audit ticks. 
 - Borders and tonal separation take precedence over shadow. The form receives one small cobalt-tinted proof-sheet offset.
 - No horizontal overflow at supported widths.
 
+### Report composition
+
+- The repository summary is the first proof sheet: a cobalt top rule and numbered audit mark frame repository identity, warnings, and prerequisite file states.
+- Report controls sit on a ruled editorial band. The single cobalt refresh action remains primary; methodology and GitHub destinations use bordered secondary links.
+- Classification filters use a controlled two-column mobile grid and a four-column grid from 800 px. The pressed state uses ink plus paper text, while counts remain monospace audit metadata.
+- Issue cards use the same structure but receive a semantic top rule: Ready green, Needs work amber, or Possibly stale red. Every color is repeated in visible classification text. Evidence rows explicitly say Passed or Missing and show deterministic points.
+- At 1024 px and wider, issue cards form a two-column reading grid; below that boundary they remain one column so evidence labels retain a useful line measure. Repository summary content alone adopts the 12-column grid at 800 px.
+- Empty, filtered-empty, partial-community, and error states use the same ruled surfaces and native actions. They do not substitute decoration for the state explanation or recovery action.
+- Labels are restrained rectangular metadata chips rather than pill-shaped primary UI. Cards use borders and paper/white contrast without large shadows, gradients, glass, or remote imagery.
+
 ### Interaction and motion
 
 - Every interactive target is at least 44 px high.
@@ -77,6 +87,8 @@ The required database searches were:
 2. UX: `form accessibility loading inline validation keyboard focus`.
 3. React: `responsive semantic forms rerender bundle`.
 4. Validation: `animation accessibility z-index loading`.
+5. Report UX: `data report filters cards responsive accessibility target size status`.
+6. React report implementation: `report filters semantic controls responsive performance`.
 
 Retained recommendations:
 
@@ -84,6 +96,7 @@ Retained recommendations:
 - use controlled React inputs and native submit semantics;
 - keep visible labels, persistent help, inline errors, keyboard focus, loading feedback, and disabled double-submit protection;
 - use mobile-first breakpoints, 44 px targets, readable measures, semantic tokens, and a complete reduced-motion path.
+- keep status feedback adjacent to the affected report, prevent page-level horizontal overflow, and use semantic buttons and links for filters and destinations.
 
 Rejected conflicts:
 
@@ -95,6 +108,10 @@ Rejected conflicts:
 
 The project specification and this frozen system take precedence whenever a database recommendation conflicts.
 
-## Deferred scope
+## Browser evidence and acceptance
 
-Task 7 establishes the landing experience and minimal loading, success, empty, and error containers. Detailed repository summaries, filters, issue cards, copy actions, refresh behavior, and advanced recovery states belong to Tasks 8 and 9 and must extend these tokens rather than introduce a competing visual language.
+- Deterministic Playwright routes cover all three GitHub endpoints; browser tests never depend on live GitHub state.
+- Desktop Chromium and a Pixel 7 profile cover landing/report WCAG scans, keyboard form and filter operation, shared links, 404, rate-limit, community partial failure, hostile remote text, and one explicit three-request refresh cycle.
+- A fixed 375 px check requires `scrollWidth <= clientWidth` and measures every visible link, button, and input at no less than 44 by 44 px. The first red run exposed 18–28 px report links; the report link and action rules are the evidence-driven correction.
+- The responsive review matrix is 375, 900, and 1366 px. At 375 px actions stack cleanly; at 900 px the summary uses 12 columns while issue cards preserve a single reading column; at 1366 px issue cards use two columns inside the 1120 px content measure.
+- The axe gate checks serious and critical WCAG 2 A/AA, 2.1 AA, and 2.2 AA findings on both the landing page and populated report. Automated checks complement, rather than replace, keyboard and responsive inspection.
