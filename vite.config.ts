@@ -1,10 +1,41 @@
 /// <reference types="vitest/config" />
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
+
+const cspContent =
+  "default-src 'self'; " +
+  "connect-src 'self' https://api.github.com; " +
+  "img-src 'self' data:; " +
+  "style-src 'self'; " +
+  "script-src 'self'; " +
+  "object-src 'none'; " +
+  "base-uri 'self'; " +
+  "form-action 'self'; " +
+  "upgrade-insecure-requests";
+
+const productionCsp = (): Plugin => ({
+  name: "issueready-production-csp",
+  transformIndexHtml: {
+    order: "post",
+    handler(_html, context) {
+      if (!context.bundle) return [];
+      return [
+        {
+          tag: "meta",
+          attrs: {
+            "http-equiv": "Content-Security-Policy",
+            content: cspContent
+          },
+          injectTo: "head"
+        }
+      ];
+    }
+  }
+});
 
 export default defineConfig({
   base: process.env.ISSUEREADY_BASE_PATH ?? "/",
-  plugins: [react()],
+  plugins: [react(), productionCsp()],
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],

@@ -55,7 +55,6 @@ export function IssueFilters({
           className="issue-filters__button"
           key={value}
           onClick={() => onChange(value)}
-          style={{ minHeight: "2.75rem" }}
           type="button"
         >
           <span>{label}</span> <strong>{count}</strong>
