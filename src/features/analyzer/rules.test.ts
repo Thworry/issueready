@@ -268,6 +268,112 @@ describe("versioned deterministic signals", () => {
   });
 });
 
+describe("date and score invariants", () => {
+  const completeBody = [
+    "Background: describe the problem context.",
+    "Scope and implementation steps:",
+    "- [ ] Edit src/parser.ts in the parser module.",
+    "Acceptance criteria: expected behavior is documented.",
+    "Tests: verify the expected result."
+  ].join("\n");
+  const invalidDate = new Date(Number.NaN);
+
+  it("rejects an invalid issue date through both assessment entry points", () => {
+    const invalidIssue = issue({
+      body: completeBody,
+      updatedAt: invalidDate
+    });
+
+    expect(() => assessIssue(invalidIssue, repository(), NOW)).toThrowError(
+      new RangeError("IssueReady scoring requires valid dates")
+    );
+    expect(() =>
+      analyzeRepository(
+        {
+          repository: repository(),
+          issues: [invalidIssue],
+          inspectedItemCount: 1,
+          apiScopeLimit: 100
+        },
+        NOW
+      )
+    ).toThrowError(new RangeError("IssueReady scoring requires valid dates"));
+  });
+
+  it("rejects an invalid repository activity date", () => {
+    const invalidRepository = repository({ pushedAt: invalidDate });
+
+    expect(() =>
+      assessIssue(issue({ body: completeBody }), invalidRepository, NOW)
+    ).toThrowError(new RangeError("IssueReady scoring requires valid dates"));
+    expect(() =>
+      analyzeRepository(
+        {
+          repository: invalidRepository,
+          issues: [],
+          inspectedItemCount: 0,
+          apiScopeLimit: 100
+        },
+        NOW
+      )
+    ).toThrowError(new RangeError("IssueReady scoring requires valid dates"));
+  });
+
+  it("rejects an invalid caller-supplied current date", () => {
+    expect(() =>
+      assessIssue(issue({ body: completeBody }), repository(), invalidDate)
+    ).toThrowError(new RangeError("IssueReady scoring requires valid dates"));
+    expect(() =>
+      analyzeRepository(
+        {
+          repository: repository(),
+          issues: [],
+          inspectedItemCount: 0,
+          apiScopeLimit: 100
+        },
+        invalidDate
+      )
+    ).toThrowError(new RangeError("IssueReady scoring requires valid dates"));
+  });
+
+  it("treats valid future issue and repository timestamps as age zero", () => {
+    const future = new Date(NOW.getTime() + 30 * DAY_MS);
+    const assessment = assessIssue(
+      issue({ body: completeBody, updatedAt: future }),
+      repository({ pushedAt: future }),
+      NOW
+    );
+
+    expect(
+      assessment.signals.find(({ key }) => key === "freshness")
+    ).toMatchObject({
+      earned: 10,
+      available: 10,
+      passed: true
+    });
+    expect(assessment.score).toBe(100);
+    expect(assessment.score).toBeLessThanOrEqual(100);
+    expect(assessment.classification).toBe("ready");
+    expect(assessment.warnings).toEqual([]);
+  });
+
+  it("keeps the score equal to earned points within the fixed 100-point budget", () => {
+    const assessment = assessIssue(
+      issue({ body: completeBody }),
+      repository(),
+      NOW
+    );
+
+    expect(
+      assessment.signals.reduce((sum, item) => sum + item.available, 0)
+    ).toBe(100);
+    expect(assessment.score).toBe(
+      assessment.signals.reduce((sum, item) => sum + item.earned, 0)
+    );
+    expect(assessment.score).toBeLessThanOrEqual(100);
+  });
+});
+
 describe("classification", () => {
   const completeBody = [
     "Background: newcomers need clear context for this problem.",

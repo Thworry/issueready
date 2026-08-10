@@ -89,8 +89,16 @@ const containsTerm = (body: string, terms: readonly string[]) => {
   return terms.some((term) => normalized.includes(term));
 };
 
-const ageInDays = (date: Date, now: Date) =>
-  Math.floor((now.getTime() - date.getTime()) / DAY_MS);
+const ageInDays = (date: Date, now: Date) => {
+  const dateTime = date.getTime();
+  const nowTime = now.getTime();
+
+  if (!Number.isFinite(dateTime) || !Number.isFinite(nowTime)) {
+    throw new RangeError("IssueReady scoring requires valid dates");
+  }
+
+  return Math.max(0, Math.floor((nowTime - dateTime) / DAY_MS));
+};
 
 function result(
   key: SignalKey,
@@ -208,6 +216,7 @@ export function analyzeRepository(
   input: AnalysisInput,
   now: Date
 ): AnalysisReport {
+  ageInDays(input.repository.pushedAt, now);
   const assessments = input.issues.map((issue) =>
     assessIssue(issue, input.repository, now)
   );
