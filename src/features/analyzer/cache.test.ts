@@ -31,6 +31,7 @@ class MemoryStorage implements Storage {
 }
 
 const ref: RepoRef = { owner: "acme", repo: "tool" };
+const cacheKey = "issueready:v1:acme/tool";
 
 const input: AnalysisInput = {
   repository: {
@@ -59,6 +60,28 @@ const input: AnalysisInput = {
   apiScopeLimit: 100
 };
 
+type CacheEnvelopeFixture = {
+  savedAt: unknown;
+  input: {
+    repository: Record<string, unknown>;
+    issues: Array<Record<string, unknown>>;
+    inspectedItemCount: unknown;
+    apiScopeLimit: unknown;
+  };
+};
+
+function savedEnvelope(storage: MemoryStorage): CacheEnvelopeFixture {
+  saveCachedInput(storage, ref, input, 1_000);
+  return JSON.parse(storage.getItem(cacheKey) ?? "") as CacheEnvelopeFixture;
+}
+
+function writeEnvelope(
+  storage: MemoryStorage,
+  envelope: CacheEnvelopeFixture
+): void {
+  storage.setItem(cacheKey, JSON.stringify(envelope));
+}
+
 describe("IssueReady session cache", () => {
   it("loads a saved value throughout the ten-minute TTL and revives dates", () => {
     const storage = new MemoryStorage();
@@ -71,13 +94,88 @@ describe("IssueReady session cache", () => {
     expect(restored?.issues[0]?.updatedAt).toBeInstanceOf(Date);
   });
 
+  it("keeps a value at the exact ten-minute boundary", () => {
+    const storage = new MemoryStorage();
+
+    saveCachedInput(storage, ref, input, 1_000);
+
+    expect(loadCachedInput(storage, ref, 601_000)).toStrictEqual(input);
+  });
+
   it("expires and removes a value older than ten minutes", () => {
     const storage = new MemoryStorage();
 
     saveCachedInput(storage, ref, input, 1_000);
 
     expect(loadCachedInput(storage, ref, 601_001)).toBeNull();
-    expect(storage.getItem("issueready:v1:acme/tool")).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
+  });
+
+  it("removes a value saved in the future", () => {
+    const storage = new MemoryStorage();
+    const envelope = savedEnvelope(storage);
+    envelope.savedAt = 2_001;
+    writeEnvelope(storage, envelope);
+
+    expect(loadCachedInput(storage, ref, 2_000)).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
+  });
+
+  it.each([
+    ["a string", '"1000"'],
+    ["an infinite JSON number", "1e309"]
+  ])("removes an envelope whose savedAt is %s", (_label, savedAtJson) => {
+    const storage = new MemoryStorage();
+    const raw = JSON.stringify(savedEnvelope(storage)).replace(
+      '"savedAt":1000',
+      `"savedAt":${savedAtJson}`
+    );
+    storage.setItem(cacheKey, raw);
+
+    expect(loadCachedInput(storage, ref, 2_000)).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
+  });
+
+  it("removes structured JSON when issues is not an array", () => {
+    const storage = new MemoryStorage();
+    const envelope = savedEnvelope(storage);
+    (envelope.input as unknown as Record<string, unknown>).issues = {
+      unexpected: true
+    };
+    writeEnvelope(storage, envelope);
+
+    expect(loadCachedInput(storage, ref, 2_000)).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
+  });
+
+  it("removes structured JSON when an issue title is null", () => {
+    const storage = new MemoryStorage();
+    const envelope = savedEnvelope(storage);
+    envelope.input.issues[0]!.title = null;
+    writeEnvelope(storage, envelope);
+
+    expect(loadCachedInput(storage, ref, 2_000)).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
+  });
+
+  it("removes a cache entry with an invalid repository date", () => {
+    const storage = new MemoryStorage();
+    const envelope = savedEnvelope(storage);
+    envelope.input.repository.pushedAt = "not-a-date";
+    writeEnvelope(storage, envelope);
+
+    expect(loadCachedInput(storage, ref, 2_000)).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
+  });
+
+  it("removes a cache entry with an invalid issue date", () => {
+    const storage = new MemoryStorage();
+    const envelope = savedEnvelope(storage);
+    envelope.input.issues[0]!.updatedAt = "not-a-date";
+    writeEnvelope(storage, envelope);
+
+    expect(loadCachedInput(storage, ref, 2_000)).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
   });
 
   it("removes malformed JSON instead of allowing cache corruption to escape", () => {
@@ -85,7 +183,7 @@ describe("IssueReady session cache", () => {
     storage.setItem("issueready:v1:acme/tool", "{malformed");
 
     expect(loadCachedInput(storage, ref, 2_000)).toBeNull();
-    expect(storage.getItem("issueready:v1:acme/tool")).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
   });
 
   it("degrades blocked reads and cleanup to a cache miss", () => {
@@ -117,7 +215,7 @@ describe("IssueReady session cache", () => {
 
     clearCachedInput(storage, ref);
 
-    expect(storage.getItem("issueready:v1:acme/tool")).toBeNull();
+    expect(storage.getItem(cacheKey)).toBeNull();
     expect(() =>
       clearCachedInput(
         {
