@@ -29,6 +29,7 @@
   font-size: 1.125rem;
   font-weight: 760;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .wordmark::after {
@@ -57,12 +58,13 @@
   background: transparent;
   font-size: 0.875rem;
   font-weight: 650;
+  white-space: nowrap;
   transition:
     background-color var(--motion-duration) var(--motion-easing),
     color var(--motion-duration) var(--motion-easing);
 }
 
-.language-switcher button:hover:not(:disabled) {
+.language-switcher button[aria-pressed="false"]:hover:not(:disabled) {
   background: var(--color-cobalt-soft);
 }
 
@@ -349,6 +351,31 @@
 
 .site-footer p {
   margin: 0;
+}
+
+@media (max-width: 30rem) {
+  .site-header {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: var(--space-2);
+    padding-block: var(--space-3);
+  }
+
+  .wordmark {
+    align-self: flex-start;
+  }
+
+  .language-switcher {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .language-switcher button {
+    min-width: 0;
+    padding-inline: var(--space-2);
+  }
 }
 
 @media (min-width: 50rem) {

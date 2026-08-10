@@ -30,6 +30,11 @@ describe("RepoForm", () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(<RepoForm language="en" loading={false} onSubmit={onSubmit} />);
+    const input = screen.getByRole("textbox", {
+      name: "Public GitHub repository"
+    });
+
+    expect(input).toBeRequired();
 
     await user.click(
       screen.getByRole("button", { name: "Analyze repository" })
@@ -39,9 +44,8 @@ describe("RepoForm", () => {
     expect(
       screen.getByText(/Enter a public GitHub repository URL/)
     ).toHaveAttribute("role", "alert");
-    expect(
-      screen.getByRole("textbox", { name: "Public GitHub repository" })
-    ).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveFocus();
   });
 
   it.each([

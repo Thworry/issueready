@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import type { Language } from "../features/analyzer/model";
 import { messages } from "../i18n";
 
@@ -28,6 +28,7 @@ export function RepoForm({
 }: RepoFormProps) {
   const [value, setValue] = useState(defaultValue);
   const [empty, setEmpty] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
   const helpId = useId();
   const errorId = useId();
@@ -38,6 +39,7 @@ export function RepoForm({
     const input = value.trim();
     if (!input) {
       setEmpty(true);
+      if (!loading) inputRef.current?.focus();
       return;
     }
 
@@ -66,6 +68,8 @@ export function RepoForm({
             if (empty) setEmpty(false);
           }}
           placeholder={copy.formPlaceholder}
+          ref={inputRef}
+          required
           spellCheck={false}
           type="url"
           value={value}

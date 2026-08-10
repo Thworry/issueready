@@ -25,6 +25,8 @@ The proof-sheet motif is a cobalt editorial margin rule with small audit ticks. 
 - Ready: `#16794A`
 - Warning: `#A15C00`
 - Stale/error: `#B63636`
+- Strong control boundary: `#858D9C`; checked at approximately 3.06:1 against paper and 3.34:1 against white, meeting the 3:1 non-text contrast boundary.
+- Decorative dividers retain the lighter neutral rule and are not used to identify control boundaries.
 - Surfaces use white and restrained neutral rules; cobalt remains the only decorative accent.
 - Status color must always be paired with text or a mark. Color is never the only signal.
 
@@ -40,6 +42,7 @@ The proof-sheet motif is a cobalt editorial margin rule with small audit ticks. 
 - Spacing scale: 4, 8, 12, 16, 24, 32, 48, and 64 px.
 - Maximum content width: 1120 px.
 - Mobile-first one-column composition. At 800 px and wider, the hero becomes a 12-column grid with copy in seven columns and the form in five.
+- At 480 px and below, the header deliberately becomes two rows and the language control spans the available width; the full English and Chinese labels remain visible without abbreviation or wrapping.
 - Radii: 6 px for controls, 12 px for composed surfaces, and 999 px only for the compact language segmented control.
 - Borders and tonal separation take precedence over shadow. The form receives one small cobalt-tinted proof-sheet offset.
 - No horizontal overflow at supported widths.
@@ -48,7 +51,7 @@ The proof-sheet motif is a cobalt editorial margin rule with small audit ticks. 
 
 - Every interactive target is at least 44 px high.
 - Native form, input, and button elements provide the semantic base.
-- Labels and persistent helper text remain visible; empty input feedback appears beside the field.
+- Labels and persistent helper text remain visible; the repository input is natively required, and empty submission focuses the invalid field while showing feedback beside it.
 - The submit action is disabled while loading, and one polite live region announces the current phase without moving focus.
 - Hover, active, focus, and disabled states are visibly distinct. Keyboard focus uses a 3 px cobalt ring with 3 px offset.
 - Non-essential transitions are at most 160 ms and explain hover, press, or state response. There is no continuous or entrance animation.
