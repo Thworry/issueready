@@ -150,7 +150,43 @@ describe("App", () => {
     expect(window.location.search).toBe("?repo=acme%2Ftool");
   });
 
-  it("renders a minimal localized empty status", async () => {
+  it("renders the full report, refreshes the previous input, and has one methodology target", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Public GitHub repository" }),
+      "https://github.com/acme/tool"
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Analyze repository" })
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Issue readiness report" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", {
+        name: "#1 Document the contributor workflow"
+      })
+    ).toBeVisible();
+    expect(document.querySelectorAll("#methodology")).toHaveLength(1);
+
+    await user.click(
+      screen.getByRole("button", { name: "Refresh public data" })
+    );
+    await waitFor(() => {
+      expect(mocks.analyze).toHaveBeenLastCalledWith(
+        "https://github.com/acme/tool",
+        expect.objectContaining({
+          force: true,
+          signal: expect.any(AbortSignal)
+        })
+      );
+    });
+  });
+
+  it("renders the deterministic empty-state recovery path", async () => {
     mocks.analyze.mockResolvedValue(report("acme/empty", 0));
     const user = userEvent.setup();
     render(<App />);
@@ -168,6 +204,14 @@ describe("App", () => {
         name: "No beginner-labelled issues found"
       })
     ).toBeVisible();
+    expect(
+      screen.getByRole("list", { name: "Labels checked" })
+    ).toHaveTextContent(
+      "good first issuefirst timers onlybeginnerbeginner friendlyhelp wanted"
+    );
+    expect(
+      screen.getByRole("button", { name: "Copy improvement checklist" })
+    ).toBeEnabled();
   });
 
   it("announces the current loading phase without moving focus", async () => {
@@ -196,7 +240,7 @@ describe("App", () => {
     await screen.findByRole("heading", { name: "acme/tool" });
   });
 
-  it("renders a minimal localized invalid URL error", async () => {
+  it("renders an invalid URL without retry or history mutation", async () => {
     const user = userEvent.setup();
     mocks.analyze.mockRejectedValue(new RepoUrlError());
     render(<App />);
@@ -214,6 +258,34 @@ describe("App", () => {
         name: /Enter a public GitHub repository URL/
       })
     ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Try again" })
+    ).not.toBeInTheDocument();
+    expect(window.location.search).toBe("");
+  });
+
+  it("routes not-found errors without guessing repository visibility", async () => {
+    const user = userEvent.setup();
+    mocks.analyze.mockRejectedValue(
+      new GitHubApiError("not-found", "raw upstream detail", 404)
+    );
+    render(<App />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Public GitHub repository" }),
+      "https://github.com/acme/missing"
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Analyze repository" })
+    );
+
+    const alert = await screen.findByRole("alert");
+    expect(
+      screen.getByRole("heading", {
+        name: "GitHub returned 404 for this repository."
+      })
+    ).toBeVisible();
+    expect(alert).not.toHaveTextContent(/private|deleted|raw upstream/i);
   });
 
   it("shows a local retry time for GitHub rate limits", async () => {
@@ -242,5 +314,78 @@ describe("App", () => {
       })
     ).toBeVisible();
     expect(screen.getByText(/^Try again after /)).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "GitHub rate limit documentation" })
+    ).toHaveAttribute(
+      "href",
+      "https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api"
+    );
+  });
+
+  it("retries a network error using the previous input", async () => {
+    const user = userEvent.setup();
+    mocks.analyze
+      .mockRejectedValueOnce(new GitHubApiError("network", "offline"))
+      .mockResolvedValueOnce(report("acme/tool"));
+    render(<App />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Public GitHub repository" }),
+      "https://github.com/acme/tool"
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Analyze repository" })
+    );
+    await user.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Issue readiness report" })
+    ).toBeVisible();
+    expect(mocks.analyze).toHaveBeenLastCalledWith(
+      "https://github.com/acme/tool",
+      expect.objectContaining({ force: true, signal: expect.any(AbortSignal) })
+    );
+  });
+
+  it("routes API errors with status but without raw details", async () => {
+    const user = userEvent.setup();
+    mocks.analyze.mockRejectedValue(
+      new GitHubApiError("api", "SECRET UPSTREAM", 503)
+    );
+    render(<App />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Public GitHub repository" }),
+      "https://github.com/acme/tool"
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Analyze repository" })
+    );
+
+    expect(await screen.findByText("HTTP 503")).toBeVisible();
+    expect(screen.getByRole("alert")).not.toHaveTextContent("SECRET UPSTREAM");
+  });
+
+  it("routes unknown errors without exposing their stack", async () => {
+    const user = userEvent.setup();
+    const error = new Error("SECRET MESSAGE");
+    error.stack = "SECRET STACK";
+    mocks.analyze.mockRejectedValue(error);
+    render(<App />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Public GitHub repository" }),
+      "https://github.com/acme/tool"
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Analyze repository" })
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "IssueReady could not complete the check."
+      })
+    ).toBeVisible();
+    expect(screen.getByRole("alert")).not.toHaveTextContent("SECRET");
   });
 });

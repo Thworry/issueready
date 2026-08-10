@@ -1,5 +1,11 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   IssueAssessment,
   SignalKey,
@@ -55,7 +61,21 @@ function assessment(): IssueAssessment {
   };
 }
 
-afterEach(cleanup);
+const writeText = vi.fn<(text: string) => Promise<void>>();
+
+beforeEach(() => {
+  writeText.mockReset();
+  writeText.mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText }
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  Reflect.deleteProperty(navigator, "clipboard");
+});
 
 describe("IssueCard", () => {
   it("renders all deterministic evidence without injecting remote text", () => {
@@ -153,5 +173,24 @@ describe("IssueCard", () => {
     );
     expect(openGitHub).toHaveAttribute("target", "_blank");
     expect(openGitHub).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("copies only missing signals in display order and never the remote body", () => {
+    const result = assessment();
+    result.missingSignals = ["verification", "acceptance"];
+    render(<IssueCard assessment={result} language="en" />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy improvement checklist" })
+    );
+
+    expect(writeText).toHaveBeenCalledWith(
+      "- [ ] Acceptance criteria\n- [ ] Verification"
+    );
+    const copied = writeText.mock.calls[0]?.[0] ?? "";
+    expect(copied).not.toContain("Specific title");
+    expect(copied).not.toContain("Context");
+    expect(copied).not.toContain("REMOTE BODY SECRET");
+    expect(copied).not.toContain("<script>");
   });
 });

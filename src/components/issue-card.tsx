@@ -4,6 +4,7 @@ import type {
   SignalKey
 } from "../features/analyzer/model";
 import { messages } from "../i18n";
+import { CopyButton } from "./copy-button";
 
 const signalOrder: SignalKey[] = [
   "specific-title",
@@ -102,6 +103,9 @@ export function IssueCard({ assessment, language }: IssueCardProps) {
   const missingSignals = signalOrder.filter((key) =>
     assessment.missingSignals.includes(key)
   );
+  const checklist = missingSignals
+    .map((key) => `- [ ] ${copy.signals[key]}`)
+    .join("\n");
   const formattedDate = new Intl.DateTimeFormat(language, {
     dateStyle: "medium"
   }).format(issue.updatedAt);
@@ -203,11 +207,19 @@ export function IssueCard({ assessment, language }: IssueCardProps) {
       <section className="issue-card__checklist">
         <h4>{cardCopy.checklistTitle}</h4>
         {missingSignals.length > 0 ? (
-          <ul aria-label={cardCopy.checklist}>
-            {missingSignals.map((key) => (
-              <li key={key}>{copy.signals[key]}</li>
-            ))}
-          </ul>
+          <>
+            <ul aria-label={cardCopy.checklist}>
+              {missingSignals.map((key) => (
+                <li key={key}>{copy.signals[key]}</li>
+              ))}
+            </ul>
+            <CopyButton
+              copiedLabel={copy.copied}
+              errorLabel={copy.copyFailed}
+              idleLabel={copy.copyChecklist}
+              text={checklist}
+            />
+          </>
         ) : (
           <p>{cardCopy.noMissing}</p>
         )}
