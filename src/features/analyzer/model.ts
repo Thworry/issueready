@@ -90,3 +90,38 @@ export interface AnalysisInput {
   inspectedItemCount: number;
   apiScopeLimit: 100;
 }
+
+export type SignalKey =
+  | "specific-title"
+  | "context"
+  | "bounded-task"
+  | "acceptance"
+  | "verification"
+  | "location"
+  | "freshness"
+  | "available";
+
+export interface SignalResult {
+  key: SignalKey;
+  earned: number;
+  available: number;
+  passed: boolean;
+  evidence: string;
+}
+
+export interface IssueAssessment {
+  issue: NormalizedIssue;
+  score: number;
+  classification: Classification;
+  signals: SignalResult[];
+  missingSignals: SignalKey[];
+  warnings: string[];
+}
+
+export interface AnalysisReport {
+  repository: NormalizedRepository;
+  assessments: IssueAssessment[];
+  counts: Record<Classification, number>;
+  inspectedItemCount: number;
+  apiScopeLimit: 100;
+}
