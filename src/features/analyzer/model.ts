@@ -61,3 +61,32 @@ export interface RepoSnapshot {
   community: GitHubCommunityProfile | null;
   issues: GitHubIssue[];
 }
+
+export interface NormalizedRepository {
+  fullName: string;
+  url: string;
+  description: string | null;
+  archived: boolean;
+  pushedAt: Date;
+  openItemCount: number;
+  readme: FileState;
+  contributing: FileState;
+  license: FileState;
+}
+
+export interface NormalizedIssue {
+  number: number;
+  title: string;
+  url: string;
+  body: string;
+  labels: string[];
+  updatedAt: Date;
+  assigneeCount: number;
+}
+
+export interface AnalysisInput {
+  repository: NormalizedRepository;
+  issues: NormalizedIssue[];
+  inspectedItemCount: number;
+  apiScopeLimit: 100;
+}
