@@ -28,12 +28,32 @@ export interface AnalysisDependencies {
   now: () => Date;
 }
 
-export function createAnalysisService(
-  deps: AnalysisDependencies = {
-    fetchSnapshot: (ref, signal) => fetchRepoSnapshot(ref, signal),
-    storage: window.sessionStorage,
-    now: () => new Date()
+const NO_CACHE_STORAGE: AnalysisDependencies["storage"] = {
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined
+};
+
+function resolveDefaultStorage(): AnalysisDependencies["storage"] {
+  if (typeof window === "undefined") return NO_CACHE_STORAGE;
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return NO_CACHE_STORAGE;
   }
+}
+
+function createDefaultDependencies(): AnalysisDependencies {
+  return {
+    fetchSnapshot: (ref, signal) => fetchRepoSnapshot(ref, signal),
+    storage: resolveDefaultStorage(),
+    now: () => new Date()
+  };
+}
+
+export function createAnalysisService(
+  deps: AnalysisDependencies = createDefaultDependencies()
 ): AnalysisService {
   return {
     async analyze(input, options = {}) {

@@ -96,7 +96,70 @@ function dependencies(
   };
 }
 
+async function withUnavailableSessionStorage(
+  run: () => void | Promise<void>
+): Promise<void> {
+  const descriptor = Object.getOwnPropertyDescriptor(window, "sessionStorage");
+  if (!descriptor) throw new Error("Expected jsdom to define sessionStorage");
+
+  Object.defineProperty(window, "sessionStorage", {
+    configurable: true,
+    get() {
+      throw new DOMException("Blocked", "SecurityError");
+    }
+  });
+
+  try {
+    await run();
+  } finally {
+    Object.defineProperty(window, "sessionStorage", descriptor);
+  }
+}
+
 describe("analysis service", () => {
+  it("creates the default service when the sessionStorage getter is unavailable", async () => {
+    await withUnavailableSessionStorage(() => {
+      expect(() => createAnalysisService()).not.toThrow();
+    });
+  });
+
+  it("analyzes with three default GitHub calls when sessionStorage is unavailable", async () => {
+    const fetcher = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.endsWith("/community/profile")) {
+        return new Response(JSON.stringify(snapshot().community), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url.includes("/issues?")) {
+        return new Response(JSON.stringify(snapshot().issues), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      return new Response(JSON.stringify(snapshot().repository), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    });
+
+    vi.stubGlobal("fetch", fetcher);
+    try {
+      await withUnavailableSessionStorage(async () => {
+        const service = createAnalysisService();
+
+        const result = await service.analyze(URL);
+
+        expect(result.repository.fullName).toBe("acme/tool");
+        expect(result.assessments).toHaveLength(1);
+        expect(fetcher).toHaveBeenCalledTimes(3);
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("validates, reads, assesses, caches, and then assesses a cache hit without fetching", async () => {
     const fetchSnapshot = vi.fn<AnalysisDependencies["fetchSnapshot"]>();
     fetchSnapshot.mockResolvedValue(snapshot());
