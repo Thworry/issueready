@@ -253,7 +253,8 @@
   text-align: left;
   transition:
     color var(--motion-duration) var(--motion-easing),
-    border-color var(--motion-duration) var(--motion-easing);
+    border-color var(--motion-duration) var(--motion-easing),
+    transform var(--motion-duration) var(--motion-easing);
 }
 
 .example-action:hover:not(:disabled) {
@@ -508,7 +509,8 @@
   transition:
     border-color var(--motion-duration) var(--motion-easing),
     color var(--motion-duration) var(--motion-easing),
-    background-color var(--motion-duration) var(--motion-easing);
+    background-color var(--motion-duration) var(--motion-easing),
+    transform var(--motion-duration) var(--motion-easing);
 }
 
 .report-view__actions a:hover,
@@ -540,7 +542,8 @@
   transition:
     border-color var(--motion-duration) var(--motion-easing),
     color var(--motion-duration) var(--motion-easing),
-    background-color var(--motion-duration) var(--motion-easing);
+    background-color var(--motion-duration) var(--motion-easing),
+    transform var(--motion-duration) var(--motion-easing);
 }
 
 .issue-filters__button strong {
@@ -556,6 +559,14 @@
   border-color: var(--color-ink);
   background: var(--color-ink);
   color: var(--color-paper);
+}
+
+.report-view__actions a:active,
+.issue-card__external-action:active,
+.issue-filters__button:active:not(:disabled),
+.copy-button:active:not(:disabled),
+.error-panel__retry:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .report-view > .scope-note {

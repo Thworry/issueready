@@ -6,6 +6,11 @@ import repositoryFixture from "./fixtures/repository.json" with { type: "json" }
 
 const REPOSITORY_URL = "https://github.com/issueready/example";
 const API_PATTERN = "https://api.github.com/**";
+const FIXED_TIME = "2026-08-10T12:00:00.000Z";
+
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_TIME);
+});
 
 interface ApiOverrides {
   communityStatus?: number;
@@ -94,6 +99,48 @@ async function tabTo(page: Page, target: Locator) {
   );
 }
 
+async function expectPressedFeedback(page: Page, target: Locator) {
+  await target.scrollIntoViewIfNeeded();
+  const box = await target.boundingBox();
+  if (!box) throw new Error("Expected a visible press target");
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  let feedback: { maxDuration: number; translateY: number } | undefined;
+  try {
+    await page.mouse.down();
+    await expect
+      .poll(
+        () =>
+          target.evaluate(
+            (element) =>
+              new DOMMatrixReadOnly(getComputedStyle(element).transform).m42
+          ),
+        { timeout: 1_000 }
+      )
+      .toBeGreaterThan(0);
+    feedback = await target.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const matrix = new DOMMatrixReadOnly(style.transform);
+      const durations = style.transitionDuration.split(",").map((value) => {
+        const duration = value.trim();
+        return duration.endsWith("ms")
+          ? Number.parseFloat(duration)
+          : Number.parseFloat(duration) * 1_000;
+      });
+      return { maxDuration: Math.max(...durations), translateY: matrix.m42 };
+    });
+  } finally {
+    await page.mouse.move(0, 0);
+    await page.mouse.up();
+  }
+
+  expect(feedback).toBeDefined();
+  if (!feedback) return;
+  expect(feedback.translateY).toBeGreaterThan(0);
+  expect(feedback.translateY).toBeLessThanOrEqual(1);
+  expect(feedback.maxDuration).toBeLessThanOrEqual(160);
+}
+
 test("landing page has no serious or critical axe violations", async ({
   page
 }) => {
@@ -107,6 +154,8 @@ test("analyzes one ready and one needs-work issue", async ({ page }) => {
   await mockGitHub(page);
   await analyze(page);
 
+  expect(await page.evaluate(() => new Date().toISOString())).toBe(FIXED_TIME);
+
   const ready = page.getByRole("article", {
     name: "#1 Document the contribution setup workflow"
   });
@@ -115,9 +164,26 @@ test("analyzes one ready and one needs-work issue", async ({ page }) => {
   await expect(
     needsWork.getByText("Needs work", { exact: true })
   ).toBeVisible();
+  await expect(needsWork.getByText("Assigned to 1 person")).toBeVisible();
   await expect(
     page.getByText("Pull request returned by the issues endpoint")
   ).toHaveCount(0);
+  await expectPressedFeedback(
+    page,
+    page.getByRole("link", { name: "How scoring works" })
+  );
+  await expectPressedFeedback(
+    page,
+    needsWork.getByRole("link", { name: "Open on GitHub" })
+  );
+  await expectPressedFeedback(
+    page,
+    page.getByRole("button", { name: "All issues 2" })
+  );
+  await expectPressedFeedback(
+    page,
+    needsWork.getByRole("button", { name: "Copy improvement checklist" })
+  );
   await expectNoSeriousAxeViolations(page);
 });
 
@@ -225,6 +291,10 @@ test("renders the explicit repository 404 state", async ({ page }) => {
       name: "GitHub returned 404 for this repository."
     })
   ).toBeVisible();
+  await expectPressedFeedback(
+    page,
+    page.getByRole("button", { name: "Try again" })
+  );
 });
 
 test("renders rate-limit reset guidance and documentation", async ({

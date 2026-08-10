@@ -42,7 +42,8 @@ const localCopy = {
     labels: "Labels",
     noLabels: "No labels",
     unassigned: "Unassigned",
-    assigned: (count: number) => `Assigned to ${count} people`,
+    assigned: (count: number) =>
+      count === 1 ? "Assigned to 1 person" : `Assigned to ${count} people`,
     evidence: "Scoring evidence",
     passed: "Passed",
     missing: "Missing",

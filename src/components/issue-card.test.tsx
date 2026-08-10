@@ -175,6 +175,22 @@ describe("IssueCard", () => {
     expect(openGitHub).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("uses the singular English assignee noun for exactly one person", () => {
+    const singular = assessment();
+    singular.issue.assigneeCount = 1;
+    const { rerender } = render(
+      <IssueCard assessment={singular} language="en" />
+    );
+
+    expect(screen.getByText("Assigned to 1 person")).toBeVisible();
+    expect(screen.queryByText("Assigned to 1 people")).toBeNull();
+
+    const plural = assessment();
+    plural.issue.assigneeCount = 2;
+    rerender(<IssueCard assessment={plural} language="en" />);
+    expect(screen.getByText("Assigned to 2 people")).toBeVisible();
+  });
+
   it("copies only missing signals in display order and never the remote body", () => {
     const result = assessment();
     result.missingSignals = ["verification", "acceptance"];
