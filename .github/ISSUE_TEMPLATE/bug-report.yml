@@ -1,0 +1,57 @@
+name: Bug report
+description: Report reproducible incorrect behavior in IssueReady
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. For a suspected vulnerability, do not continue here: open the repository **Security** tab and select **Report a vulnerability**.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong, and where in IssueReady did it happen?
+      placeholder: Describe one reproducible problem.
+    validations:
+      required: true
+  - type: input
+    id: reproduction-url
+    attributes:
+      label: Public reproduction URL
+      description: Provide the public GitHub repository URL or shareable IssueReady query that demonstrates the problem.
+      placeholder: https://github.com/owner/repository
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What observable result did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What did IssueReady show or do instead? Include exact visible error text when useful.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and operating system
+      description: Include browser version, operating system, viewport or device, and language mode when relevant.
+      placeholder: Chromium 140 on macOS 16, 375×812, Simplified Chinese
+    validations:
+      required: true
+  - type: checkboxes
+    id: no-credentials
+    attributes:
+      label: Public-data confirmation
+      options:
+        - label: I included no password, cookie, token, private-repository data, personal information, or other credential in this report or its reproduction URL.
+          required: true
+        - label: This is not a security vulnerability. I will use private vulnerability reporting for any suspected security issue.
+          required: true

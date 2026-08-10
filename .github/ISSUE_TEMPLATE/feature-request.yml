@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a focused improvement within IssueReady's read-only scope
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        IssueReady is a small, bilingual, deterministic, read-only browser tool. Please describe the user need before proposing implementation details.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What concrete problem cannot be solved well with the current behavior?
+      placeholder: Describe the recurring user problem and evidence for it.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What observable result would make the problem better?
+    validations:
+      required: true
+  - type: textarea
+    id: user
+    attributes:
+      label: Intended user
+      description: Who needs this, and in what workflow?
+      placeholder: For example, a maintainer preparing a contributor-ready issue queue.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope-fit
+    attributes:
+      label: Scope fit
+      description: Confirm that the request fits the current product boundary.
+      options:
+        - label: The outcome can remain public-data-only, read-only, deterministic, bilingual, and usable without login, a GitHub token, a backend, analytics, or telemetry.
+          required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What current workflow, workaround, or smaller change did you consider?
+    validations:
+      required: true
