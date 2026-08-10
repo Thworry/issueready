@@ -2,6 +2,8 @@ import type { RepoRef } from "./model";
 
 const OWNER = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const REPO = /^[A-Za-z0-9._-]{1,100}$/;
+const RAW_REPOSITORY_URL =
+  /^(?:https:\/\/)?github\.com(?::\d+)?\/[^/\\]+\/[^/\\]+\/?$/i;
 
 export class RepoUrlError extends Error {
   constructor() {
@@ -14,7 +16,7 @@ export class RepoUrlError extends Error {
 
 function validate(owner: string, repoValue: string): RepoRef {
   const repo = repoValue.endsWith(".git") ? repoValue.slice(0, -4) : repoValue;
-  if (!OWNER.test(owner) || !REPO.test(repo)) {
+  if (!OWNER.test(owner) || !REPO.test(repo) || repo === "." || repo === "..") {
     throw new RepoUrlError();
   }
   return { owner, repo };
@@ -23,6 +25,9 @@ function validate(owner: string, repoValue: string): RepoRef {
 export function parseGitHubRepoUrl(input: string): RepoRef {
   const trimmed = input.trim();
   if (!trimmed) {
+    throw new RepoUrlError();
+  }
+  if (!RAW_REPOSITORY_URL.test(trimmed)) {
     throw new RepoUrlError();
   }
 
@@ -36,6 +41,7 @@ export function parseGitHubRepoUrl(input: string): RepoRef {
   if (
     url.protocol !== "https:" ||
     url.hostname.toLowerCase() !== "github.com" ||
+    url.port ||
     url.username ||
     url.password ||
     url.search ||
@@ -56,7 +62,11 @@ export function toShareSearch(ref: RepoRef): string {
 }
 
 export function repoRefFromSearch(search: string): RepoRef | null {
-  const slug = new URLSearchParams(search).get("repo");
+  const slugs = new URLSearchParams(search).getAll("repo");
+  if (slugs.length !== 1) {
+    return null;
+  }
+  const slug = slugs[0];
   if (!slug) {
     return null;
   }

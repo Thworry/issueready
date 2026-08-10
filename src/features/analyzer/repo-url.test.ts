@@ -32,7 +32,16 @@ describe("parseGitHubRepoUrl", () => {
     ["a hash", "https://github.com/ossf/scorecard#readme"],
     ["internal owner whitespace", "https://github.com/open source/scorecard"],
     ["internal repository whitespace", "https://github.com/ossf/score card"],
-    ["an insecure protocol", "http://github.com/ossf/scorecard"]
+    ["an insecure protocol", "http://github.com/ossf/scorecard"],
+    ["a non-default port", "https://github.com:444/ossf/scorecard"],
+    ["an out-of-range port", "https://github.com:999999/ossf/scorecard"],
+    [
+      "duplicate separators after the host",
+      "https://github.com//ossf/scorecard"
+    ],
+    ["duplicate path separators", "https://github.com/ossf//scorecard"],
+    ["a dot-segment path", "https://github.com/ossf/extra/../scorecard"],
+    ["backslash separators", "https://github.com\\ossf\\scorecard"]
   ])("rejects %s", (_label, input) => {
     expect(() => parseGitHubRepoUrl(input)).toThrow(RepoUrlError);
   });
@@ -56,10 +65,14 @@ describe("repository share search", () => {
 
   it.each([
     "",
+    "?repo=",
     "?repo=ossf",
     "?repo=ossf/scorecard/issues",
     "?repo=bad owner/scorecard",
-    "?repo=ossf/"
+    "?repo=ossf/",
+    "?repo=ossf/.",
+    "?repo=ossf/..",
+    "?repo=ossf/scorecard&repo=evil/repo"
   ])("returns null for invalid search input %s", (search) => {
     expect(repoRefFromSearch(search)).toBeNull();
   });
