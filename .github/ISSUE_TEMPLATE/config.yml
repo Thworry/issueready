@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security reports — use the repository Security tab
-    url: https://docs.github.com/code-security/security-advisories/working-with-repository-security-advisories/privately-reporting-a-security-vulnerability
+    url: https://github.com/Thworry/issueready/security/advisories/new
     about: Open this repository's Security tab, select “Report a vulnerability,” and report privately. Never disclose a vulnerability in a public issue.
