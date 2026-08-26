@@ -30,7 +30,7 @@ Compatible Dependabot updates are refreshed against the latest main and merged o
 
 The `main` ruleset requires pull requests with zero external approvals, strict `quality`, resolved review threads, and protection from deletion and non-fast-forward pushes. Vulnerability alerts, Dependabot security updates, and compatible public CodeQL default setup may be enabled.
 
-These improvements do not automatically justify a release. A minor release is appropriate only if the user-visible website positioning and complete mobile gate land together and all checks pass; metadata-only or repository-setting changes remain on main without a ceremonial release.
+These improvements do not automatically justify a release. An appropriate patch or minor release is justified only if the user-visible website positioning and complete mobile gate land together and all checks pass; metadata-only or repository-setting changes remain on main without a ceremonial release.
 
 ## Privacy and authorship
 

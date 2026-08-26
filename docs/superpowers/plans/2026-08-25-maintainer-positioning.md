@@ -194,7 +194,7 @@ Target `refs/heads/main`; require pull requests with zero approvals, resolved re
 
 **Interfaces:**
 - Consumes: merged user-visible positioning, portable full browser gate, dependency decisions, and successful Pages deployment.
-- Produces: either an honest minor release or a documented no-release decision.
+- Produces: either an honest patch/minor release or a documented no-release decision.
 
 - [ ] **Step 1: Run the complete local gate**
 
@@ -216,7 +216,7 @@ Expected: every command PASS and both Playwright projects execute.
 
 - [ ] **Step 2: Evaluate whether a release helps users**
 
-Release a minor version only if the website hero, README workflow, portable setup, and complete browser matrix all land together and remote CI/Pages pass. If only metadata/settings land, keep v0.1.0 and state that no user-facing package release was warranted.
+Release an appropriate patch or minor version only if the website hero, README workflow, portable setup, and complete browser matrix all land together and remote CI/Pages pass. Use a patch when the ruleset and product behavior remain compatible; if only metadata/settings land, keep v0.1.0 and state that no user-facing package release was warranted.
 
 - [ ] **Step 3: If releasing, produce complete artifacts**
 

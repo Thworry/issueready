@@ -7,7 +7,9 @@ import {
   LIGHTHOUSE_CATEGORIES,
   LIGHTHOUSE_MINIMUM_SCORE,
   LIGHTHOUSE_RUNS,
+  createChromeLaunchOptions,
   createPreviewSpawnSpec,
+  createSignalCleanupManager,
   enforceCategoryThresholds,
   stopChildProcess,
   withPreviewServer
@@ -83,6 +85,45 @@ test("starts Vite preview without a shell", () => {
     "43123",
     "--strictPort"
   ]);
+});
+
+test("leaves SIGINT cleanup to the shared signal manager", () => {
+  const localOptions = createChromeLaunchOptions({});
+  const ciOptions = createChromeLaunchOptions({ CI: "true" });
+
+  assert.equal(localOptions.handleSIGINT, false);
+  assert.ok(localOptions.chromeFlags.includes("--disable-dev-shm-usage"));
+  assert.ok(!localOptions.chromeFlags.includes("--no-sandbox"));
+  assert.ok(ciOptions.chromeFlags.includes("--no-sandbox"));
+});
+
+test("waits for every registered cleanup before forwarding a signal", async () => {
+  const calls = [];
+  const fakeProcess = new EventEmitter();
+  fakeProcess.pid = 456;
+  fakeProcess.kill = (pid, signal) => {
+    calls.push(["forward", pid, signal]);
+    return true;
+  };
+
+  const manager = createSignalCleanupManager(fakeProcess);
+  manager.registerCleanup(async () => {
+    calls.push(["preview", "start"]);
+    await Promise.resolve();
+    calls.push(["preview", "done"]);
+  });
+  manager.registerCleanup(async () => {
+    calls.push(["chrome", "start"]);
+    await Promise.resolve();
+    calls.push(["chrome", "done"]);
+  });
+
+  fakeProcess.emit("SIGTERM");
+  await manager.waitForShutdown();
+
+  assert.deepEqual(calls.at(-1), ["forward", 456, "SIGTERM"]);
+  assert.equal(calls.filter(([, state]) => state === "done").length, 2);
+  manager.dispose();
 });
 
 test("withPreviewServer always stops the preview after success", async () => {

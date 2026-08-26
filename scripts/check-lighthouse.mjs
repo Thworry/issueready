@@ -26,6 +26,72 @@ const PROJECT_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const OUTPUT_DIRECTORY = path.join(PROJECT_ROOT, ".lighthouseci");
 const VITE_CLI = path.join(PROJECT_ROOT, "node_modules/vite/bin/vite.js");
 
+export function createChromeLaunchOptions(environment = process.env) {
+  const chromeFlags = ["--headless=new", "--disable-dev-shm-usage"];
+  if (environment.CI === "true" || environment.CI === "1") {
+    chromeFlags.push("--no-sandbox");
+  }
+
+  return {
+    chromePath: chromium.executablePath(),
+    chromeFlags,
+    handleSIGINT: false
+  };
+}
+
+export function createSignalCleanupManager(processRef = process) {
+  const cleanups = new Set();
+  let shutdownPromise;
+
+  const removeListeners = () => {
+    processRef.removeListener("SIGINT", handleInterrupt);
+    processRef.removeListener("SIGTERM", handleTermination);
+  };
+  const beginShutdown = (signal) => {
+    shutdownPromise ??= Promise.allSettled(
+      [...cleanups].map((cleanup) => cleanup())
+    ).then((results) => {
+      for (const result of results) {
+        if (result.status === "rejected") {
+          console.error(
+            result.reason instanceof Error
+              ? result.reason.message
+              : result.reason
+          );
+        }
+      }
+      removeListeners();
+      processRef.kill(processRef.pid, signal);
+    });
+    return shutdownPromise;
+  };
+  const handleInterrupt = () => {
+    void beginShutdown("SIGINT");
+  };
+  const handleTermination = () => {
+    void beginShutdown("SIGTERM");
+  };
+
+  processRef.on("SIGINT", handleInterrupt);
+  processRef.on("SIGTERM", handleTermination);
+
+  return {
+    registerCleanup(cleanup) {
+      let cleanupPromise;
+      const runOnce = () => {
+        cleanupPromise ??= Promise.resolve().then(cleanup);
+        return cleanupPromise;
+      };
+      cleanups.add(runOnce);
+      return () => cleanups.delete(runOnce);
+    },
+    dispose: removeListeners,
+    waitForShutdown() {
+      return shutdownPromise ?? Promise.resolve();
+    }
+  };
+}
+
 const childHasExited = (child) =>
   child.exitCode !== null || child.signalCode !== null;
 
@@ -173,6 +239,8 @@ export async function withPreviewServer(callback, dependencies = {}) {
   const startServer = dependencies.startServer ?? startPreviewServer;
   const waitForReady = dependencies.waitForReady ?? waitForHttpServer;
   const stopServer = dependencies.stopServer ?? stopChildProcess;
+  const createSignalManager =
+    dependencies.createSignalManager ?? createSignalCleanupManager;
 
   const port = await findPort();
   const url = `http://${HOST}:${port}/`;
@@ -182,26 +250,19 @@ export async function withPreviewServer(callback, dependencies = {}) {
     stopPromise ??= Promise.resolve(stopServer(child));
     return stopPromise;
   };
-
-  const forwardSignal = (signal) => {
-    void stopOnce().finally(() => {
-      process.removeListener("SIGINT", handleInterrupt);
-      process.removeListener("SIGTERM", handleTermination);
-      process.kill(process.pid, signal);
-    });
-  };
-  const handleInterrupt = () => forwardSignal("SIGINT");
-  const handleTermination = () => forwardSignal("SIGTERM");
-  process.once("SIGINT", handleInterrupt);
-  process.once("SIGTERM", handleTermination);
+  const signalManager = createSignalManager();
+  const unregisterPreviewCleanup = signalManager.registerCleanup(stopOnce);
 
   try {
     await waitForReady(url, child);
-    return await callback(url);
+    return await callback(url, signalManager);
   } finally {
-    process.removeListener("SIGINT", handleInterrupt);
-    process.removeListener("SIGTERM", handleTermination);
-    await stopOnce();
+    try {
+      await stopOnce();
+    } finally {
+      unregisterPreviewCleanup();
+      signalManager.dispose();
+    }
   }
 }
 
@@ -226,14 +287,18 @@ async function writeRunReports(runNumber, report) {
   ]);
 }
 
-async function runAudits(url) {
-  const chrome = await launch({
-    chromePath: chromium.executablePath(),
-    chromeFlags: ["--headless=new"]
-  });
+async function runAudits(url, signalManager) {
+  const chromePromise = launch(createChromeLaunchOptions());
+  let killPromise;
+  const killChromeOnce = () => {
+    killPromise ??= chromePromise.then((chrome) => chrome.kill());
+    return killPromise;
+  };
+  const unregisterChromeCleanup = signalManager.registerCleanup(killChromeOnce);
   const results = [];
 
   try {
+    const chrome = await chromePromise;
     for (let runIndex = 0; runIndex < LIGHTHOUSE_RUNS; runIndex += 1) {
       const runNumber = runIndex + 1;
       const result = await lighthouse(url, {
@@ -262,7 +327,11 @@ async function runAudits(url) {
       console.log(`Lighthouse run ${runNumber}/${LIGHTHOUSE_RUNS}: ${summary}`);
     }
   } finally {
-    await chrome.kill();
+    try {
+      await killChromeOnce();
+    } finally {
+      unregisterChromeCleanup();
+    }
   }
 
   enforceCategoryThresholds(results);

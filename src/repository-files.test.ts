@@ -98,6 +98,10 @@ describe("public repository files", () => {
       expect(workflow).not.toContain("test:e2e --project=");
     }
 
+    expect(repositoryFile(".github/workflows/ci.yml")).toMatch(
+      /^\s*- run: pnpm test:scripts\s*$/m
+    );
+
     const contributing = repositoryFile("CONTRIBUTING.md");
     expect(contributing).toContain("available on `PATH`");
     expect(contributing).toContain("desktop and mobile Chromium projects");
