@@ -1,9 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const localPnpm =
-  "/Users/jojo/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm";
-const pnpm = process.env.CI ? "pnpm" : localPnpm;
-
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -18,7 +14,7 @@ export default defineConfig({
     { name: "mobile-chromium", use: { ...devices["Pixel 7"] } }
   ],
   webServer: {
-    command: pnpm + " build && " + pnpm + " preview --host 127.0.0.1",
+    command: "pnpm build && pnpm preview --host 127.0.0.1",
     port: 4173,
     reuseExistingServer: !process.env.CI
   }

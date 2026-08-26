@@ -16,6 +16,9 @@ const requiredFiles = [
   "SECURITY.md",
   "docs/methodology.md",
   "docs/architecture.md",
+  "playwright.config.ts",
+  ".github/workflows/ci.yml",
+  ".github/workflows/deploy-pages.yml",
   ".github/ISSUE_TEMPLATE/bug-report.yml",
   ".github/ISSUE_TEMPLATE/feature-request.yml",
   ".github/ISSUE_TEMPLATE/config.yml",
@@ -62,5 +65,28 @@ describe("public repository files", () => {
     expect(security).toContain("Security");
     expect(security).toContain("Report a vulnerability");
     expect(security).toMatch(/do not (?:open|file|report).+public issue/i);
+  });
+
+  it("keeps Playwright portable and runs every browser project in automation", () => {
+    const playwrightConfig = repositoryFile("playwright.config.ts");
+
+    expect(playwrightConfig).not.toMatch(/\/Users\/|localPnpm/);
+    expect(playwrightConfig).toContain(
+      'command: "pnpm build && pnpm preview --host 127.0.0.1"'
+    );
+
+    for (const workflowPath of [
+      ".github/workflows/ci.yml",
+      ".github/workflows/deploy-pages.yml"
+    ] as const) {
+      const workflow = repositoryFile(workflowPath);
+
+      expect(workflow).toMatch(/^\s*- run: pnpm test:e2e\s*$/m);
+      expect(workflow).not.toContain("test:e2e --project=");
+    }
+
+    const contributing = repositoryFile("CONTRIBUTING.md");
+    expect(contributing).toContain("available on `PATH`");
+    expect(contributing).toContain("desktop and mobile Chromium projects");
   });
 });

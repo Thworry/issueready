@@ -17,7 +17,7 @@ By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 IssueReady requires:
 
 - Node.js 24.x
-- pnpm 11.x; the repository pins pnpm 11.16.0
+- pnpm 11.x; the repository pins pnpm 11.16.0, and `pnpm` must be available on `PATH`
 
 Install the locked dependencies and Chromium used by Playwright:
 
@@ -64,6 +64,8 @@ Any user-interface behavior or layout change must include appropriate component 
 ```bash
 pnpm test:e2e
 ```
+
+This command runs both the desktop and mobile Chromium projects configured in `playwright.config.ts`. Keep both projects green so local checks match the CI and Pages deployment gates.
 
 Verify keyboard operation, visible focus, meaningful names and status text, no horizontal overflow at supported widths, 44-by-44-pixel interactive targets, reduced-motion behavior, and no serious or critical axe violations. If the visual result changes materially, include screenshots or another concise piece of accessibility/viewport evidence in the pull request.
 
