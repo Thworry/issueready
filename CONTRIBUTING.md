@@ -57,6 +57,14 @@ pnpm build
 pnpm check:bundle
 ```
 
+Then run the three-pass Lighthouse gate with the installed Playwright
+Chromium. Every Performance, Accessibility, Best Practices, and SEO score
+must be at least 0.95:
+
+```bash
+pnpm check:lighthouse
+```
+
 ## UI and accessibility changes
 
 Any user-interface behavior or layout change must include appropriate component tests and Playwright coverage. Install Chromium as shown above, then run:

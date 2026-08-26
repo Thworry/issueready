@@ -87,7 +87,7 @@ pnpm check:lighthouse
 pnpm check
 ```
 
-`pnpm check` 会运行代码检查、格式检查、单元/组件测试和生产构建。运行包体积检查和 Lighthouse 前，请先执行 `pnpm build`。端到端命令会通过 Playwright 配置自行构建并启动应用。
+`pnpm check` 会运行代码检查、格式检查、单元/组件及构建脚本测试和生产构建。运行包体积检查和 Lighthouse 前，请先执行 `pnpm build`。Lighthouse 命令会启动本地 Vite 预览，使用已经安装的 Playwright Chromium 连续检测三次；每次的性能、无障碍、最佳实践与 SEO 分数都不得低于 0.95。端到端命令会通过 Playwright 配置自行构建并启动应用。
 
 ## 部署
 

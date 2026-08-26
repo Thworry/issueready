@@ -87,7 +87,7 @@ pnpm check:lighthouse
 pnpm check
 ```
 
-`pnpm check` runs linting, formatting verification, unit/component tests, and a production build. Run `pnpm build` before the bundle-size and Lighthouse commands. The end-to-end command builds and serves the application through its Playwright configuration.
+`pnpm check` runs linting, formatting verification, unit/component and build-script tests, and a production build. Run `pnpm build` before the bundle-size and Lighthouse commands. The Lighthouse command starts a local Vite preview, audits it three times with the installed Playwright Chromium, and requires Performance, Accessibility, Best Practices, and SEO to score at least 0.95 in every run. The end-to-end command builds and serves the application through its Playwright configuration.
 
 ## Deployment
 
