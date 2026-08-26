@@ -2,9 +2,13 @@
 
 [简体中文](README.zh-CN.md)
 
-IssueReady checks whether beginner-labelled issues in a public GitHub repository are clear, current, and actionable. It produces a bilingual, read-only report with an explainable score, contributor-prerequisite checks, and a copyable improvement checklist.
+**Live site:** <https://thworry.github.io/issueready/>
 
-The analysis is deterministic. IssueReady does not use AI to judge an issue and does not claim that a high-scoring issue is safe, correct, or guaranteed to be accepted by a maintainer.
+IssueReady is a maintainer-side pre-publish check for beginner-labelled issues in public GitHub repositories. Use it before publishing or applying a beginner label, during triage, and when improving contributor onboarding. It checks whether a task gives contributors enough context, scope, acceptance criteria, verification guidance, freshness, and repository prerequisites to decide whether they can start responsibly.
+
+The bilingual report is read-only, browser-local, and deterministic. It scores eight visible signals and provides a copyable improvement checklist. IssueReady does not use AI to judge an issue, and a high score does not mean that a task is safe, correct, or guaranteed to be accepted.
+
+[RepoScope](https://github.com/Thworry/reposcope) helps prospective adopters understand a repository; IssueReady helps maintainers prepare individual tasks.
 
 ## Use IssueReady
 

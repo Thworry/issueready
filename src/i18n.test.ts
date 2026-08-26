@@ -81,6 +81,27 @@ describe("messages", () => {
     expect(messages["zh-CN"].brand).toContain("IssueReady");
   });
 
+  it("positions the landing copy as a maintainer pre-publish workflow", () => {
+    const englishHero = `${messages.en.tagline} ${messages.en.intro}`;
+    const chineseHero = `${messages["zh-CN"].tagline} ${messages["zh-CN"].intro}`;
+
+    expect(englishHero).toMatch(/maintainer/i);
+    expect(englishHero).toMatch(/before/i);
+    expect(englishHero).toMatch(/triage|onboarding/i);
+    expect(chineseHero).toContain("维护者");
+    expect(chineseHero).toContain("发布前");
+    expect(chineseHero).toMatch(/分诊|贡献者上手/);
+  });
+
+  it("distinguishes repository adoption from issue preparation", () => {
+    expect(`RepoScope${messages.en.scope}`).toMatch(
+      /repository before adoption.*IssueReady.*maintainers.*issues/i
+    );
+    expect(`RepoScope${messages["zh-CN"].scope}`).toMatch(
+      /仓库.*IssueReady.*维护者.*(?:任务|Issue)/
+    );
+  });
+
   it("formats English and Chinese result counts", () => {
     expect(messages.en.resultCount(1)).toBe("1 issue");
     expect(messages.en.resultCount(2)).toBe("2 issues");
