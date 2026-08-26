@@ -34,7 +34,7 @@ Hyphens and underscores in labels are normalized to spaces, and matching is case
 
 Each candidate issue receives a score out of 100 from eight visible checks: specific title, context, bounded task, acceptance criteria, verification, location hint, freshness, and availability to claim. The report classifies each issue as **Ready**, **Needs work**, or **Possibly stale**. Staleness rules take precedence over the score.
 
-Ruleset `1.0.0`, every weight, dictionary, boundary, prerequisite, and precedence rule are published in [the methodology](docs/methodology.md). The result is a maintenance aid, not an automated contribution policy; always read the repository's own guidance and confirm with its maintainers.
+Ruleset `1.0.0`, every weight, dictionary, boundary, prerequisite, and precedence rule are published in [the methodology](docs/methodology.md). See the [version history](CHANGELOG.md) for product changes. The result is a maintenance aid, not an automated contribution policy; always read the repository's own guidance and confirm with its maintainers.
 
 ## Scope and limits
 

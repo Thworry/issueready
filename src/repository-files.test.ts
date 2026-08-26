@@ -10,6 +10,7 @@ const root = resolve(import.meta.dirname, "..");
 const requiredFiles = [
   "README.md",
   "README.zh-CN.md",
+  "CHANGELOG.md",
   "LICENSE",
   "CONTRIBUTING.md",
   "CODE_OF_CONDUCT.md",
@@ -39,6 +40,18 @@ describe("public repository files", () => {
     expect(repositoryFile("README.md")).toContain("docs/methodology.md");
     expect(repositoryFile("README.zh-CN.md")).toContain("README.md");
     expect(repositoryFile("README.zh-CN.md")).toContain("docs/methodology.md");
+    expect(repositoryFile("README.md")).toContain("CHANGELOG.md");
+    expect(repositoryFile("README.zh-CN.md")).toContain("CHANGELOG.md");
+  });
+
+  it("publishes the current package version in the changelog", () => {
+    const packageManifest = JSON.parse(
+      readFileSync(resolve(root, "package.json"), "utf8")
+    ) as { version?: unknown };
+    const changelog = repositoryFile("CHANGELOG.md");
+
+    expect(packageManifest.version).toBe("0.1.1");
+    expect(changelog).toContain("## 0.1.1 - 2026-08-26");
   });
 
   it("publishes ruleset 1.0.0 and all eight scoring signals", () => {
