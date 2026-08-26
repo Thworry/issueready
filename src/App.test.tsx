@@ -83,6 +83,21 @@ describe("App", () => {
     expect(screen.getAllByText(/Read-only\. No login\./)[0]).toBeVisible();
   });
 
+  it("links RepoScope while explaining the adopter and maintainer boundary", () => {
+    render(<App />);
+
+    const repoScopeLink = screen.getByRole("link", { name: "RepoScope" });
+    expect(repoScopeLink).toHaveAttribute(
+      "href",
+      "https://github.com/Thworry/reposcope"
+    );
+    expect(repoScopeLink).toHaveAttribute("rel", "noreferrer");
+    expect(repoScopeLink).toHaveAttribute("target", "_blank");
+    expect(repoScopeLink.closest("p")).toHaveTextContent(
+      /RepoScope helps people understand a repository before adoption; IssueReady helps maintainers prepare actionable issues\./
+    );
+  });
+
   it("switches copy and synchronizes the document language", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -92,6 +107,14 @@ describe("App", () => {
     );
 
     expect(screen.getByRole("button", { name: "分析仓库" })).toBeEnabled();
+    expect(
+      screen.getByText("在贡献者看到任务之前，先把新手 Issue 准备好。")
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "RepoScope" }).closest("p")
+    ).toHaveTextContent(
+      /RepoScope 帮助准备采用项目的人先看懂整个仓库；IssueReady 帮助维护者把具体任务整理成可执行的 Issue。/
+    );
     expect(document.documentElement.lang).toBe("zh-CN");
   });
 

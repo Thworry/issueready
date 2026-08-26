@@ -2,9 +2,13 @@
 
 [简体中文](README.zh-CN.md)
 
-IssueReady checks whether beginner-labelled issues in a public GitHub repository are clear, current, and actionable. It produces a bilingual, read-only report with an explainable score, contributor-prerequisite checks, and a copyable improvement checklist.
+**Live site:** <https://thworry.github.io/issueready/>
 
-The analysis is deterministic. IssueReady does not use AI to judge an issue and does not claim that a high-scoring issue is safe, correct, or guaranteed to be accepted by a maintainer.
+IssueReady is a maintainer-side pre-publish check for beginner-labelled issues in public GitHub repositories. Use it before publishing or applying a beginner label, during triage, and when improving contributor onboarding. It checks whether a task gives contributors enough context, scope, acceptance criteria, verification guidance, freshness, and repository prerequisites to decide whether they can start responsibly.
+
+The bilingual report is read-only, browser-local, and deterministic. It scores eight visible signals and provides a copyable improvement checklist. IssueReady does not use AI to judge an issue, and a high score does not mean that a task is safe, correct, or guaranteed to be accepted.
+
+[RepoScope](https://github.com/Thworry/reposcope) helps prospective adopters understand a repository; IssueReady helps maintainers prepare individual tasks.
 
 ## Use IssueReady
 
@@ -30,7 +34,7 @@ Hyphens and underscores in labels are normalized to spaces, and matching is case
 
 Each candidate issue receives a score out of 100 from eight visible checks: specific title, context, bounded task, acceptance criteria, verification, location hint, freshness, and availability to claim. The report classifies each issue as **Ready**, **Needs work**, or **Possibly stale**. Staleness rules take precedence over the score.
 
-Ruleset `1.0.0`, every weight, dictionary, boundary, prerequisite, and precedence rule are published in [the methodology](docs/methodology.md). The result is a maintenance aid, not an automated contribution policy; always read the repository's own guidance and confirm with its maintainers.
+Ruleset `1.0.0`, every weight, dictionary, boundary, prerequisite, and precedence rule are published in [the methodology](docs/methodology.md). See the [version history](CHANGELOG.md) for product changes. The result is a maintenance aid, not an automated contribution policy; always read the repository's own guidance and confirm with its maintainers.
 
 ## Scope and limits
 
@@ -83,7 +87,7 @@ pnpm check:lighthouse
 pnpm check
 ```
 
-`pnpm check` runs linting, formatting verification, unit/component tests, and a production build. Run `pnpm build` before the bundle-size and Lighthouse commands. The end-to-end command builds and serves the application through its Playwright configuration.
+`pnpm check` runs linting, formatting verification, unit/component and build-script tests, and a production build. Run `pnpm build` before the bundle-size and Lighthouse commands. The Lighthouse command starts a local Vite preview, audits it three times with the installed Playwright Chromium, and requires Performance, Accessibility, Best Practices, and SEO to score at least 0.95 in every run. The end-to-end command builds and serves the application through its Playwright configuration.
 
 ## Deployment
 

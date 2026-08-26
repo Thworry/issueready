@@ -83,6 +83,16 @@ export function App() {
             <p className="hero-intro">
               <strong>{copy.tagline}</strong> {copy.intro}
             </p>
+            <p className="hero-scope">
+              <a
+                href="https://github.com/Thworry/reposcope"
+                rel="noreferrer"
+                target="_blank"
+              >
+                RepoScope
+              </a>
+              {copy.scope}
+            </p>
           </div>
 
           <RepoForm

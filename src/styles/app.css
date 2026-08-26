@@ -124,6 +124,25 @@
   line-height: 1.7;
 }
 
+.hero-scope {
+  max-width: 62ch;
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-rule);
+  color: var(--color-ink-muted);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.hero-scope a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-right: var(--space-1);
+  font-weight: 720;
+  vertical-align: middle;
+}
+
 .proof-rail {
   display: none;
 }

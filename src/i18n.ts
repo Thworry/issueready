@@ -9,6 +9,7 @@ export interface Messages {
   brand: string;
   tagline: string;
   intro: string;
+  scope: string;
   languageLabel: string;
   english: string;
   chinese: string;
@@ -52,9 +53,11 @@ export interface Messages {
 
 const en: Messages = {
   brand: "IssueReady",
-  tagline: "Are your beginner issues actually ready?",
+  tagline: "Prepare beginner issues before contributors find them.",
   intro:
-    "Check clarity, scope, verification, freshness, and contributor prerequisites before someone starts.",
+    "A maintainer-side pre-publish check for context, scope, acceptance criteria, verification, freshness, triage, and contributor onboarding.",
+  scope:
+    " helps people understand a repository before adoption; IssueReady helps maintainers prepare actionable issues.",
   languageLabel: "Language",
   english: "English",
   chinese: "Simplified Chinese",
@@ -129,9 +132,11 @@ const en: Messages = {
 
 const zhCN: Messages = {
   brand: "IssueReady",
-  tagline: "你的新手任务真的准备好了吗？",
+  tagline: "在贡献者看到任务之前，先把新手 Issue 准备好。",
   intro:
-    "在贡献者开始之前，检查任务是否具备清晰背景、明确范围、验证方法、有效时效和参与条件。",
+    "面向维护者的发布前检查，核对背景、范围、验收标准、验证方法、时效、分诊和贡献者上手条件。",
+  scope:
+    " 帮助准备采用项目的人先看懂整个仓库；IssueReady 帮助维护者把具体任务整理成可执行的 Issue。",
   languageLabel: "语言",
   english: "英文",
   chinese: "简体中文",
